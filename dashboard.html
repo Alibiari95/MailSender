@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>داشبورد ارسال ایمیل</title>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0f;
+      --surface: #16161a;
+      --surface2: #1e1e24;
+      --border: #2a2a35;
+      --gold: #c8a96e;
+      --gold-dim: rgba(200,169,110,0.15);
+      --text: #e8e4dc;
+      --text-muted: #7a7880;
+      --green: #4ade80;
+      --red: #f87171;
+      --radius: 8px;
+    }
+
+    body {
+      font-family: 'Vazirmatn', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 0;
+    }
+
+    /* ── Layout ── */
+    .app { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: 220px;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      padding: 28px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: fixed;
+      right: 0; top: 0; bottom: 0;
+    }
+
+    .sidebar-brand {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 1px;
+      padding: 0 12px 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+
+    .nav-item {
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text-muted);
+      display: flex; align-items: center; gap: 10px;
+      transition: all .2s;
+    }
+    .nav-item:hover, .nav-item.active {
+      background: var(--gold-dim);
+      color: var(--gold);
+    }
+    .nav-item .icon { font-size: 16px; }
+
+    .main {
+      margin-right: 220px;
+      flex: 1;
+      padding: 36px 40px;
+      max-width: 1000px;
+    }
+
+    /* ── Steps ── */
+    .steps {
+      display: flex;
+      gap: 0;
+      margin-bottom: 40px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .step {
+      flex: 1;
+      padding: 14px 20px;
+      background: var(--surface);
+      font-size: 13px;
+      color: var(--text-muted);
+      display: flex; align-items: center; gap: 10px;
+      border-left: 1px solid var(--border);
+      transition: all .3s;
+    }
+    .step:first-child { border-left: none; }
+    .step.active { background: var(--gold-dim); color: var(--gold); }
+    .step.done { color: var(--green); }
+    .step-num {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      border: 1px solid currentColor;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 32px;
+      margin-bottom: 24px;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap-right: 10px; gap: 10px;
+    }
+    .card-title::before {
+      content: '';
+      display: inline-block;
+      width: 3px; height: 18px;
+      background: var(--gold);
+      border-radius: 2px;
+    }
+
+    /* ── Inputs ── */
+    input[type="text"], input[type="password"], textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: 'Vazirmatn', sans-serif;
+      font-size: 14px;
+      padding: 12px 16px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    input:focus, textarea:focus {
+      border-color: var(--gold);
+    }
+    textarea { min-height: 80px; resize: vertical; }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      letter-spacing: .5px;
+    }
+
+    .field { margin-bottom: 18px; }
+
+    /* ── Drop Zone ── */
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--gold);
+      background: var(--gold-dim);
+    }
+    .drop-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .drop-icon { font-size: 36px; margin-bottom: 12px; }
+    .drop-title { font-size: 15px; color: var(--text); margin-bottom: 6px; }
+    .drop-sub { font-size: 12px; color: var(--text-muted); }
+
+    /* ── Table ── */
+    .table-wrap { overflow-x: auto; margin-top: 16px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: var(--surface2); padding: 10px 14px; text-align: right; color: var(--text-muted); font-weight: 500; border-bottom: 1px solid var(--border); }
+    td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--surface2); }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 500;
+    }
+    .badge-green { background: rgba(74,222,128,.15); color: var(--green); }
+    .badge-red { background: rgba(248,113,113,.15); color: var(--red); }
+    .badge-gold { background: var(--gold-dim); color: var(--gold); }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 12px 28px;
+      border-radius: var(--radius);
+      font-family: 'Vazirmatn', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all .2s;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-primary {
+      background: var(--gold);
+      color: #1a1200;
+    }
+    .btn-primary:hover { opacity: .88; transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+    .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+
+    .btn-row { display: flex; gap: 12px; align-items: center; justify-content: flex-end; margin-top: 24px; }
+
+    /* ── Progress ── */
+    .progress-wrap { margin-top: 20px; }
+    .progress-bar-bg {
+      background: var(--surface2);
+      border-radius: 4px;
+      height: 8px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(to left, var(--gold), #e8d5a3);
+      border-radius: 4px;
+      transition: width .4s;
+      width: 0%;
+    }
+    .progress-text { font-size: 13px; color: var(--text-muted); }
+
+    /* ── Stats ── */
+    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+    .stat-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+    }
+    .stat-num { font-size: 32px; font-weight: 700; color: var(--gold); }
+    .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+    /* ── Template preview ── */
+    .preview-frame {
+      background: #fff;
+      border-radius: var(--radius);
+      overflow: hidden;
+      min-height: 300px;
+      margin-top: 16px;
+      border: 1px solid var(--border);
+    }
+    .preview-frame iframe { width: 100%; min-height: 400px; border: none; }
+
+    /* ── Alerts ── */
+    .alert {
+      padding: 14px 18px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: flex; align-items: flex-start; gap: 10px;
+    }
+    .alert-info { background: rgba(200,169,110,.1); border: 1px solid rgba(200,169,110,.3); color: var(--gold); }
+    .alert-success { background: rgba(74,222,128,.1); border: 1px solid rgba(74,222,128,.3); color: var(--green); }
+    .alert-error { background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.3); color: var(--red); }
+
+    /* ── Sections ── */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* ── Config note ── */
+    .config-tag {
+      display: inline-block;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 12px;
+      color: var(--gold);
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-brand">📨 MailSender</div>
+    <div class="nav-item active" onclick="showSection('compose')" id="nav-compose">
+      <span class="icon">✍️</span> نوشتن ایمیل
+    </div>
+    <div class="nav-item" onclick="showSection('contacts')" id="nav-contacts">
+      <span class="icon">👥</span> مخاطبین
+    </div>
+    <div class="nav-item" onclick="showSection('send')" id="nav-send">
+      <span class="icon">🚀</span> ارسال
+    </div>
+    <div class="nav-item" onclick="showSection('settings')" id="nav-settings" style="margin-top:auto;">
+      <span class="icon">⚙️</span> تنظیمات
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- ═══════════════ SECTION: Compose ═══════════════ -->
+    <section class="section active" id="section-compose">
+      <h2 style="font-size:22px; margin-bottom:6px;">✍️ متن ایمیل</h2>
+      <p style="font-size:13px; color:var(--text-muted); margin-bottom:28px;">از <span class="config-tag">{{name}}</span> و <span class="config-tag">{{email}}</span> برای شخصی‌سازی استفاده کن</p>
+
+      <div class="card">
+        <div class="card-title">موضوع ایمیل</div>
+        <div class="field">
+          <input type="text" id="emailSubject" placeholder="مثلاً: سلام {{name}}، پیشنهاد ویژه‌ای برات داریم 🎁" />
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">محتوای HTML ایمیل</div>
+        <div class="alert alert-info">
+          💡 می‌تونی HTML قالب قبلی رو اینجا paste کنی. هرجا می‌خوای اسم مخاطب باشه بنویس <span class="config-tag">{{name}}</span>
+        </div>
+        <textarea id="emailHtml" rows="12" placeholder="<!DOCTYPE html>&#10;<html>&#10;  <body>&#10;    <h1>سلام {{name}} عزیز!</h1>&#10;    ...&#10;  </body>&#10;</html>"></textarea>
+
+        <div class="btn-row">
+          <button class="btn btn-ghost" onclick="showPreview()">👁 پیش‌نمایش</button>
+        </div>
+
+        <div id="previewArea" style="display:none;">
+          <div class="preview-frame">
+            <iframe id="previewFrame"></iframe>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ SECTION: Contacts ═══════════════ -->
+    <section class="section" id="section-contacts">
+      <h2 style="font-size:22px; margin-bottom:6px;">👥 مخاطبین</h2>
+      <p style="font-size:13px; color:var(--text-muted); margin-bottom:28px;">فایل CSV آپلود کن — ستون‌های <span class="config-tag">name</span> و <span class="config-tag">email</span> اجباری‌ان</p>
+
+      <div class="card">
+        <div class="card-title">آپلود CSV</div>
+
+        <div class="alert alert-info">
+          📋 فرمت CSV: <span class="config-tag">name,email,هر فیلد دیگه‌ای</span> — می‌تونی هر ستونی اضافه کنی و با <span class="config-tag">{{column_name}}</span> در متن استفاده کنی
+        </div>
+
+        <div class="drop-zone" id="dropZone">
+          <input type="file" accept=".csv" onchange="handleCSV(event)" />
+          <div class="drop-icon">📂</div>
+          <div class="drop-title">فایل CSV رو اینجا بکش یا کلیک کن</div>
+          <div class="drop-sub">فرمت: name,email,...</div>
+        </div>
+
+        <div id="orManual" style="margin-top:20px;">
+          <div class="card-title" style="margin-bottom:12px; font-size:13px;">یا مستقیم وارد کن</div>
+          <textarea id="manualCsv" rows="5" placeholder="name,email&#10;علی رضایی,ali@example.com&#10;سارا احمدی,sara@example.com"></textarea>
+          <button class="btn btn-ghost" style="margin-top:10px;" onclick="parseManualCSV()">+ اضافه کن</button>
+        </div>
+      </div>
+
+      <div id="contactsTable" style="display:none;">
+        <div class="card">
+          <div class="card-title" id="contactCount">مخاطبین</div>
+          <div class="table-wrap">
+            <table id="tableContacts">
+              <thead><tr id="tableHead"></tr></thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-ghost" onclick="clearContacts()">🗑 پاک کردن</button>
+            <button class="btn btn-primary" onclick="goToSend()">ادامه → ارسال 🚀</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ SECTION: Send ═══════════════ -->
+    <section class="section" id="section-send">
+      <h2 style="font-size:22px; margin-bottom:6px;">🚀 ارسال</h2>
+      <p style="font-size:13px; color:var(--text-muted); margin-bottom:28px;">بررسی نهایی و شروع ارسال</p>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-num" id="statTotal">0</div>
+          <div class="stat-label">مخاطب</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="statSent" style="color:var(--green)">0</div>
+          <div class="stat-label">ارسال شده</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="statFailed" style="color:var(--red)">0</div>
+          <div class="stat-label">ناموفق</div>
+        </div>
+      </div>
+
+      <div id="sendChecks" class="card">
+        <div class="card-title">بررسی پیش از ارسال</div>
+        <div id="checkList"></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btnSend" onclick="startSend()" disabled>🚀 شروع ارسال</button>
+        </div>
+      </div>
+
+      <div id="progressSection" style="display:none;" class="card">
+        <div class="card-title">در حال ارسال...</div>
+        <div class="progress-wrap">
+          <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+          <div class="progress-text" id="progressText">آماده‌سازی...</div>
+        </div>
+      </div>
+
+      <div id="resultsTable" style="display:none;" class="card">
+        <div class="card-title">نتایج ارسال</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ایمیل</th><th>وضعیت</th><th>جزئیات</th></tr></thead>
+            <tbody id="resultsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ SECTION: Settings ═══════════════ -->
+    <section class="section" id="section-settings">
+      <h2 style="font-size:22px; margin-bottom:6px;">⚙️ تنظیمات</h2>
+      <p style="font-size:13px; color:var(--text-muted); margin-bottom:28px;">اتصال به Cloudflare Worker</p>
+
+      <div class="card">
+        <div class="card-title">آدرس Worker</div>
+        <div class="field">
+          <label>Worker URL</label>
+          <input type="text" id="workerUrl" placeholder="https://your-worker.your-subdomain.workers.dev" />
+        </div>
+        <div class="field">
+          <label>API Secret (اگه تنظیم کردی)</label>
+          <input type="password" id="apiSecret" placeholder="the-secret-you-set-in-worker" />
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="saveSettings()">💾 ذخیره</button>
+          <button class="btn btn-ghost" onclick="testConnection()">🔌 تست اتصال</button>
+        </div>
+        <div id="connectionStatus" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">راهنمای Deploy کردن Worker</div>
+        <ol style="font-size:13px; color:var(--text-muted); line-height:2.2; padding-right:18px;">
+          <li>فایل <span class="config-tag">worker.js</span> رو دانلود کن</li>
+          <li>به <strong style="color:var(--text);">dash.cloudflare.com</strong> برو → Workers & Pages → Create</li>
+          <li>کد رو paste کن و Deploy بزن</li>
+          <li>در Settings → Variables این متغیرها رو اضافه کن:</li>
+        </ol>
+        <div style="margin-top:12px; display:grid; gap:8px;">
+          <div style="display:flex; gap:12px; align-items:center; font-size:13px;">
+            <span class="config-tag">FROM_EMAIL</span>
+            <span style="color:var(--text-muted);">آدرس فرستنده — مثلاً hello@startup.com</span>
+          </div>
+          <div style="display:flex; gap:12px; align-items:center; font-size:13px;">
+            <span class="config-tag">FROM_NAME</span>
+            <span style="color:var(--text-muted);">نام فرستنده — مثلاً تیم استارتاپ</span>
+          </div>
+          <div style="display:flex; gap:12px; align-items:center; font-size:13px;">
+            <span class="config-tag">API_SECRET</span>
+            <span style="color:var(--text-muted);">یه رشته تصادفی برای امنیت</span>
+          </div>
+        </div>
+        <div class="alert alert-info" style="margin-top:16px;">
+          ⚠️ برای اینکه MailChannels کار کنه، باید DNS record های SPF/DKIM دامنه‌ات رو تنظیم کنی. راهنما: <strong>developers.cloudflare.com/email-routing</strong>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  // ──────────────────────────────────────────
+  // State
+  // ──────────────────────────────────────────
+  let recipients = [];
+  let sendResults = [];
+
+  // ──────────────────────────────────────────
+  // Navigation
+  // ──────────────────────────────────────────
+  function showSection(name) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('section-' + name).classList.add('active');
+    document.getElementById('nav-' + name).classList.add('active');
+    if (name === 'send') renderSendChecks();
+  }
+
+  function goToSend() { showSection('send'); }
+
+  // ──────────────────────────────────────────
+  // CSV Parsing
+  // ──────────────────────────────────────────
+  function handleCSV(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => parseCSVText(ev.target.result);
+    reader.readAsText(file, 'UTF-8');
+  }
+
+  function parseManualCSV() {
+    const text = document.getElementById('manualCsv').value.trim();
+    if (text) parseCSVText(text);
+  }
+
+  function parseCSVText(text) {
+    const lines = text.trim().split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length < 2) return alert('CSV باید حداقل یک header و یک ردیف داشته باشه');
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    if (!headers.includes('email')) return alert('ستون email اجباریه');
+
+    recipients = [];
+    for (let i = 1; i < lines.length; i++) {
+      const vals = lines[i].split(',').map(v => v.trim());
+      const obj = {};
+      headers.forEach((h, idx) => obj[h] = vals[idx] || '');
+      if (obj.email) recipients.push(obj);
+    }
+
+    renderContactsTable(headers);
+  }
+
+  function renderContactsTable(headers) {
+    document.getElementById('contactsTable').style.display = 'block';
+    document.getElementById('contactCount').textContent = `${recipients.length} مخاطب بارگذاری شد`;
+
+    const head = document.getElementById('tableHead');
+    head.innerHTML = headers.map(h => `<th>${h}</th>`).join('');
+
+    const body = document.getElementById('tableBody');
+    body.innerHTML = recipients.slice(0, 10).map(r =>
+      `<tr>${headers.map(h => `<td>${r[h] || ''}</td>`).join('')}</tr>`
+    ).join('');
+
+    if (recipients.length > 10) {
+      body.innerHTML += `<tr><td colspan="${headers.length}" style="color:var(--text-muted); text-align:center;">+ ${recipients.length - 10} مخاطب دیگر...</td></tr>`;
+    }
+  }
+
+  function clearContacts() {
+    recipients = [];
+    document.getElementById('contactsTable').style.display = 'none';
+    document.getElementById('manualCsv').value = '';
+  }
+
+  // ──────────────────────────────────────────
+  // Preview
+  // ──────────────────────────────────────────
+  function showPreview() {
+    const html = document.getElementById('emailHtml').value;
+    const area = document.getElementById('previewArea');
+    const frame = document.getElementById('previewFrame');
+
+    // Fill with first recipient if available, else dummy data
+    const dummy = recipients[0] || { name: 'علی رضایی', email: 'ali@example.com' };
+    const personalized = personalizeLocal(html, dummy);
+
+    area.style.display = 'block';
+    frame.srcdoc = personalized;
+  }
+
+  function personalizeLocal(template, recipient) {
+    let result = template;
+    for (const [key, value] of Object.entries(recipient)) {
+      const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'gi');
+      result = result.replace(regex, value || '');
+    }
+    return result;
+  }
+
+  // ──────────────────────────────────────────
+  // Send Checks
+  // ──────────────────────────────────────────
+  function renderSendChecks() {
+    const subject = document.getElementById('emailSubject').value.trim();
+    const html = document.getElementById('emailHtml').value.trim();
+    const workerUrl = localStorage.getItem('workerUrl') || '';
+
+    const checks = [
+      { label: 'موضوع ایمیل وارد شده', ok: !!subject },
+      { label: 'محتوای HTML وارد شده', ok: !!html },
+      { label: `مخاطبین بارگذاری شده (${recipients.length} نفر)`, ok: recipients.length > 0 },
+      { label: 'آدرس Worker تنظیم شده', ok: !!workerUrl },
+    ];
+
+    const allOk = checks.every(c => c.ok);
+    document.getElementById('btnSend').disabled = !allOk;
+    document.getElementById('statTotal').textContent = recipients.length;
+
+    document.getElementById('checkList').innerHTML = checks.map(c => `
+      <div style="display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); font-size:14px;">
+        <span style="font-size:18px;">${c.ok ? '✅' : '❌'}</span>
+        <span style="color:${c.ok ? 'var(--text)' : 'var(--red)'}">${c.label}</span>
+      </div>
+    `).join('');
+  }
+
+  // ──────────────────────────────────────────
+  // Send
+  // ──────────────────────────────────────────
+  async function startSend() {
+    const subject = document.getElementById('emailSubject').value.trim();
+    const html = document.getElementById('emailHtml').value.trim();
+    const workerUrl = localStorage.getItem('workerUrl');
+    const apiSecret = localStorage.getItem('apiSecret') || '';
+
+    document.getElementById('sendChecks').style.display = 'none';
+    document.getElementById('progressSection').style.display = 'block';
+
+    const fill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const resultsBody = document.getElementById('resultsBody');
+    document.getElementById('resultsTable').style.display = 'block';
+    resultsBody.innerHTML = '';
+
+    let sent = 0, failed = 0;
+
+    // Send in batches of 10
+    const batchSize = 10;
+    for (let i = 0; i < recipients.length; i += batchSize) {
+      const batch = recipients.slice(i, i + batchSize);
+
+      try {
+        const res = await fetch(`${workerUrl}/send`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Secret': apiSecret,
+          },
+          body: JSON.stringify({ recipients: batch, template: html, subject }),
+        });
+
+        const data = await res.json();
+
+        if (data.results) {
+          data.results.forEach(r => {
+            if (r.status === 'sent') sent++;
+            else failed++;
+
+            resultsBody.innerHTML += `
+              <tr>
+                <td>${r.email}</td>
+                <td><span class="badge ${r.status === 'sent' ? 'badge-green' : 'badge-red'}">${r.status === 'sent' ? '✓ ارسال شد' : '✗ خطا'}</span></td>
+                <td style="font-size:12px; color:var(--text-muted)">${r.error || '—'}</td>
+              </tr>`;
+          });
+        }
+      } catch (err) {
+        batch.forEach(r => {
+          failed++;
+          resultsBody.innerHTML += `<tr><td>${r.email}</td><td><span class="badge badge-red">✗ خطا</span></td><td style="font-size:12px;color:var(--text-muted)">${err.message}</td></tr>`;
+        });
+      }
+
+      const done = Math.min(i + batchSize, recipients.length);
+      const pct = Math.round((done / recipients.length) * 100);
+      fill.style.width = pct + '%';
+      progressText.textContent = `${done} از ${recipients.length} — ${pct}٪`;
+      document.getElementById('statSent').textContent = sent;
+      document.getElementById('statFailed').textContent = failed;
+    }
+
+    progressText.textContent = `✅ کامل شد — ${sent} ارسال شد، ${failed} ناموفق`;
+  }
+
+  // ──────────────────────────────────────────
+  // Settings
+  // ──────────────────────────────────────────
+  function saveSettings() {
+    const url = document.getElementById('workerUrl').value.trim();
+    const secret = document.getElementById('apiSecret').value.trim();
+    localStorage.setItem('workerUrl', url);
+    localStorage.setItem('apiSecret', secret);
+    document.getElementById('connectionStatus').innerHTML =
+      '<div class="alert alert-success">✅ تنظیمات ذخیره شد</div>';
+  }
+
+  async function testConnection() {
+    const url = document.getElementById('workerUrl').value.trim();
+    const statusEl = document.getElementById('connectionStatus');
+    if (!url) return statusEl.innerHTML = '<div class="alert alert-error">❌ آدرس Worker رو وارد کن</div>';
+
+    statusEl.innerHTML = '<div class="alert alert-info">⏳ در حال تست...</div>';
+    try {
+      const res = await fetch(`${url}/preview`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ template: 'سلام {{name}}', recipient: { name: 'تست' } }),
+      });
+      if (res.ok) {
+        statusEl.innerHTML = '<div class="alert alert-success">✅ اتصال موفق! Worker در دسترسه</div>';
+      } else {
+        statusEl.innerHTML = `<div class="alert alert-error">❌ خطا: ${res.status}</div>`;
+      }
+    } catch (e) {
+      statusEl.innerHTML = `<div class="alert alert-error">❌ اتصال ناموفق: ${e.message}</div>`;
+    }
+  }
+
+  // ──────────────────────────────────────────
+  // Load saved settings
+  // ──────────────────────────────────────────
+  window.onload = () => {
+    const url = localStorage.getItem('workerUrl');
+    const secret = localStorage.getItem('apiSecret');
+    if (url) document.getElementById('workerUrl').value = url;
+    if (secret) document.getElementById('apiSecret').value = secret;
+  };
+
+  // Drag & drop
+  const dz = document.getElementById('dropZone');
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) { const r = new FileReader(); r.onload = ev => parseCSVText(ev.target.result); r.readAsText(file, 'UTF-8'); }
+  });
+</script>
+</body>
+</html>
